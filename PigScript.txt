@@ -1,0 +1,44 @@
+
+# Loading crime data  data
+crime_data = LOAD 'Crimes_-_2001_to_present.csv' using org.apache.pig.piggybank.storage.CSVExcelStorage(',')  as (ID:int, Case_Number:chararray, Date:chararray, Block_id: chararray, IUCR:chararray, Primary_Type:chararray, Description:chararray, Location_Description:chararray, Arrest:boolean, Domestic:boolean, Beat: chararray, District: chararray, Ward:int, Community_Area:chararray, FBICode:chararray, X_Coordinate:int, Y_Coordinate:int, Year:int,Updated_On:chararray, Latitude:double,Longitude:double,Location:tuple(t1:double,t2:double));
+# 1 Write a MapReduce/Pig program to calculate the number of cases investigated under each FBI code
+
+crime_data = LOAD 'Crimes_-_2001_to_present.csv' using org.apache.pig.piggybank.storage.CSVExcelStorage(',')  as (ID:int, Case_Number:chararray, Date:chararray, Block_id: chararray, IUCR:chararray, Primary_Type:chararray, Description:chararray, Location_Description:chararray, Arrest:boolean, Domestic:boolean, Beat: chararray, District: chararray, Ward:int, Community_Area:chararray, FBICode:chararray, X_Coordinate:int, Y_Coordinate:int, Year:int,Updated_On:chararray, Latitude:double,Longitude:double,Location:tuple(t1:double,t2:double));
+group_data = group crime_data by FBICode;
+num_cace = FOREACH group_data GENERATE group,COUNT(crime_data .Case_Number);
+Dump num_cace;
+
+#2  Write a MapReduce/Pig program to calculate the number of cases investigated under FBI code 32.
+#   No FBI code present
+
+crime_data = LOAD 'Crimes_-_2001_to_present.csv' using org.apache.pig.piggybank.storage.CSVExcelStorage(',')  as (ID:int, Case_Number:chararray, Date:chararray, Block_id: chararray, IUCR:chararray, Primary_Type:chararray, Description:chararray, Location_Description:chararray, Arrest:boolean, Domestic:boolean, Beat: chararray, District: chararray, Ward:int, Community_Area:chararray, FBICode:chararray, X_Coordinate:int, Y_Coordinate:int, Year:int,Updated_On:chararray, Latitude:double,Longitude:double,Location:tuple(t1:double,t2:double));
+group_data = group crime_data by FBICode;
+num_cace = FOREACH group_data GENERATE group,COUNT(crime_data .Case_Number);
+filt = filter num_cace by group == '32';
+dump filt;
+
+
+# 3. Write a MapReduce/Pig program to calculate the number of arrests in theft district wise.
+
+
+crime_data = LOAD 'Crimes_-_2001_to_present.csv' using org.apache.pig.piggybank.storage.CSVExcelStorage(',')  as (ID:int, Case_Number:chararray, Date:chararray, Block_id: chararray, IUCR:chararray, Primary_Type:chararray, Description:chararray, Location_Description:chararray, Arrest:boolean, Domestic:boolean, Beat: chararray, District: chararray, Ward:int, Community_Area:chararray, FBICode:chararray, X_Coordinate:int, Y_Coordinate:int, Year:int,Updated_On:chararray, Latitude:double,Longitude:double,Location:tuple(t1:double,t2:double));
+f = filter crime_data by Arrest ==true;
+group_data = group f by District;
+num_arr = FOREACH group_data GENERATE group,count(f . Arrest);
+dump num_arr;
+
+
+#4. Write a MapReduce/Pig program to calculate the number of arrests done between October 2014 and October 2015.
+
+
+crimeData = LOAD 'Crimes_-_2001_to_present.csv' using org.apache.pig.piggybank.storage.CSVExcelStorage(',')  as (ID:int, Case_Number:chararray, Date:chararray, Block_id: chararray, IUCR:chararray, Primary_Type:chararray, Description:chararray, Location_Description:chararray, Arrest:boolean, Domestic:boolean, Beat: chararray, District: chararray, Ward:int, Community_Area:chararray, FBICode:chararray, X_Coordinate:int, Y_Coordinate:int, Year:int,Updated_On:chararray, Latitude:double,Longitude:double,Location:tuple(t1:double,t2:double));
+Fil_Tru = Filter crimeData by (arrest == true);
+For_IdDat = foreach Fil_Tru generate ID, Date;
+DatSubString =  FOREACH For_IdDat Generate ID,(int)SUBSTRING(Date,0,2) as month, (int)SUBSTRING(Date,6,10) AS Year
+Fil_Year = Filter DatSubString by ($1 >=09 AND $2 == 2014) OR ($1 <= 09 AND $2 == 2015);
+Final = Foreach (group Fil_Year by $2) generate group, COUNT(Fil_Year.ID) as count;
+Fin_Group = group Final all;
+Fin_Result = Foreach Fin_Group generate SUM(Final.count);
+Dump;
+
+
